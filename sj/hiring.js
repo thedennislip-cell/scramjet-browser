@@ -1,28 +1,44 @@
-function hire(url) {
-  url = url.trim();
-  if (!isUrl(url)) url = "https://www.duckduckgo.com/?q=" + url;
-  else if (!(url.startsWith("https://") || url.startsWith("http://")))
-    url = "https://" + url;
-  else if (
-    /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/.test(
-      url
-    )
-  )
-    url = "http://" + url;
+function hire(value) {
+  const input = value.trim();
+  if (!input) return;
 
-  sessionStorage.setItem("encodedUrl", url);
-  location.href = "!";
+  // Treat text that isn't a web address as a normal web search.
+  if (!isUrl(input)) {
+    window.location.assign(
+      "https://duckduckgo.com/?q=" + encodeURIComponent(input)
+    );
+    return;
+  }
+
+  // Add HTTPS when the user enters a domain without a protocol.
+  const destination = /^https?:\/\//i.test(input)
+    ? input
+    : "https://" + input;
+
+  window.location.assign(destination);
 }
 
 function isUrl(str = "") {
-  var pattern = new RegExp(
-    "^(https?:\\/\\/)?" + // protocol
-      "((([a-z\\d]([a-z\\d-]*[a-z\\d])*)\\.)+[a-z]{2,}|" + // domain name
-      "((\\d{1,3}\\.){3}\\d{1,3}))" + // OR ip (v4) address
-      "(\\:\\d+)?(\\/[-a-z\\d%_.~+]*)*" + // port and path
-      "(\\?[;&a-z\\d%_.~+=-]*)?" + // query string
-      "(\\#[-a-z\\d_]*)?$",
+  const pattern = new RegExp(
+    "^(https?:\\/\\/)?"
+      + "((([a-z\\d]([a-z\\d-]*[a-z\\d])*)\\.)+[a-z]{2,}|"
+      + "((\\d{1,3}\\.){3}\\d{1,3}))"
+      + "(\\:\\d+)?(\\/[-a-z\\d%_.~+]*)*"
+      + "(\\?[;&a-z\\d%_.~+=-]*)?"
+      + "(\\#[-a-z\\d_]*)?$",
     "i"
-  ); // fragment locator
-  return !!pattern.test(str);
+  );
+  return pattern.test(str);
 }
+
+// Connect the homepage address bar to Enter.
+document.addEventListener("DOMContentLoaded", () => {
+  const address = document.getElementById("proxy-address");
+  if (!address) return;
+
+  address.addEventListener("keydown", (event) => {
+    if (event.key !== "Enter") return;
+    event.preventDefault();
+    hire(address.value);
+  });
+});
